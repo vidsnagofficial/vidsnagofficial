@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { create } from "youtube-dl-exec";
 
 // Use system-installed yt-dlp
-const youtubedl = create("yt-dlp");
+// Use custom binary path
+import * as path from "path";
+const binaryPath = path.join(process.cwd(), 'bin', 'yt-dlp');
+const youtubedl = create(binaryPath);
 
 // Rate limiting - simple in-memory store (use Redis in production)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();

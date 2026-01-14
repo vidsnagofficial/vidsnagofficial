@@ -266,7 +266,9 @@ async function startDownload(
         }
 
         console.log(`[VidSnag] Spawning yt-dlp...`);
-        const ytdlp = spawn("yt-dlp", args);
+        // Use custom binary path
+        const binaryPath = path.join(process.cwd(), 'bin', 'yt-dlp');
+        const ytdlp = spawn(binaryPath, args);
         console.log(`[VidSnag] yt-dlp spawned with PID: ${ytdlp.pid}`);
         let lastProgress = 0;
 
