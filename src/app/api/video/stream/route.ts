@@ -265,15 +265,33 @@ async function startDownload(
             return;
         }
 
-        // Robust cookie path resolution
+        // Robust cookie path resolution (with copy to temp for write access)
         const getCookiesPath = () => {
-            const localCookies = path.join(process.cwd(), 'youtube_cookies.txt');
-            if (fs.existsSync(localCookies)) return localCookies;
+            try {
+                // 1. Identify source path
+                let sourcePath = path.join(process.cwd(), 'youtube_cookies.txt');
+                if (!fs.existsSync(sourcePath)) {
+                    sourcePath = path.join(process.cwd(), '..', 'youtube_cookies.txt');
+                }
 
-            const lambdaCookies = path.join(process.cwd(), '..', 'youtube_cookies.txt');
-            if (fs.existsSync(lambdaCookies)) return lambdaCookies;
+                if (!fs.existsSync(sourcePath)) return undefined;
 
-            return undefined;
+                // 2. Define temp path (writable)
+                const tempKey = `cookies_${Date.now()}.txt`;
+                const tempPath = path.join('/tmp', tempKey);
+
+                // 3. Copy file to temp
+                try {
+                    const data = fs.readFileSync(sourcePath);
+                    fs.writeFileSync(tempPath, data);
+                    return tempPath;
+                } catch (copyError) {
+                    console.error("Error copy cookies to temp:", copyError);
+                    return sourcePath;
+                }
+            } catch (e) {
+                return undefined;
+            }
         };
 
         const cookiesPath = getCookiesPath();
