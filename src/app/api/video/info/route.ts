@@ -8,14 +8,35 @@ import * as fs from "fs";
 
 // Robust path resolution for Vercel
 const getBinaryPath = () => {
+    // Debug logging
+    console.log("Current CWD:", process.cwd());
+    try {
+        console.log("Files in CWD:", fs.readdirSync(process.cwd()));
+        console.log("Files in ..:", fs.readdirSync(path.join(process.cwd(), '..')));
+    } catch (e) { console.log("Error listing files:", e); }
+
     // 1. Try local project bin (works in dev)
     const localBin = path.join(process.cwd(), 'bin', 'yt-dlp');
-    if (fs.existsSync(localBin)) return localBin;
+    if (fs.existsSync(localBin)) {
+        console.log("Found at localBin:", localBin);
+        return localBin;
+    }
 
-    // 2. Try Vercel's lambda path (sometimes differs)
+    // 2. Try Vercel's lambda path
     const lambdaBin = path.join(process.cwd(), '..', 'bin', 'yt-dlp');
-    if (fs.existsSync(lambdaBin)) return lambdaBin;
+    if (fs.existsSync(lambdaBin)) {
+        console.log("Found at lambdaBin:", lambdaBin);
+        return lambdaBin;
+    }
 
+    // 3. Try to find 'bin' folder anywhere
+    try {
+        if (fs.existsSync(path.join(process.cwd(), 'bin'))) {
+            console.log("Files in bin:", fs.readdirSync(path.join(process.cwd(), 'bin')));
+        }
+    } catch (e) { }
+
+    console.log("Binary not found, falling back to global 'yt-dlp'");
     // 3. Fallback to just 'yt-dlp' if in PATH
     return 'yt-dlp';
 };
