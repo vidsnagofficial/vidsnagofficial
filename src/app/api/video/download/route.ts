@@ -101,7 +101,8 @@ export async function POST(request: NextRequest) {
         });
 
         // The result should be the direct URL as a string
-        let downloadUrl = typeof result === 'string' ? result.trim() : String(result).trim();
+        const resultOutput = result as unknown;
+        let downloadUrl = typeof resultOutput === 'string' ? resultOutput.trim() : String(resultOutput).trim();
 
         // If we got multiple URLs (video + audio separated by newline), take only the first
         if (downloadUrl.includes('\n')) {
