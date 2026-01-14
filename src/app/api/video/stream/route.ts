@@ -265,6 +265,25 @@ async function startDownload(
             return;
         }
 
+        // Robust cookie path resolution
+        const getCookiesPath = () => {
+            const localCookies = path.join(process.cwd(), 'youtube_cookies.txt');
+            if (fs.existsSync(localCookies)) return localCookies;
+
+            const lambdaCookies = path.join(process.cwd(), '..', 'youtube_cookies.txt');
+            if (fs.existsSync(lambdaCookies)) return lambdaCookies;
+
+            return undefined;
+        };
+
+        const cookiesPath = getCookiesPath();
+        if (cookiesPath) {
+            args.push("--cookies", cookiesPath);
+            console.log(`[VidSnag] Using cookies from: ${cookiesPath}`);
+        } else {
+            console.log("[VidSnag] Warning: No cookies file found");
+        }
+
         // Robust path resolution for Vercel
         const getBinaryPath = () => {
             const localBin = path.join(process.cwd(), 'bin', 'yt-dlp');

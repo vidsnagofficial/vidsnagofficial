@@ -20,6 +20,19 @@ const getBinaryPath = () => {
     return 'yt-dlp';
 };
 
+// Robust cookie path resolution
+const getCookiesPath = () => {
+    // 1. Try local project root
+    const localCookies = path.join(process.cwd(), 'youtube_cookies.txt');
+    if (fs.existsSync(localCookies)) return localCookies;
+
+    // 2. Try parent dir (Vercel)
+    const lambdaCookies = path.join(process.cwd(), '..', 'youtube_cookies.txt');
+    if (fs.existsSync(lambdaCookies)) return lambdaCookies;
+
+    return undefined;
+};
+
 const binaryPath = getBinaryPath();
 const youtubedl = create(binaryPath);
 
@@ -111,12 +124,14 @@ export async function POST(request: NextRequest) {
         }
 
         // Get the direct download URL using yt-dlp
+        const cookiesPath = getCookiesPath();
         const result = await youtubedl(url, {
             getUrl: true,
             format: formatSelector,
             noCheckCertificates: true,
             noWarnings: true,
             noPlaylist: true,
+            cookies: cookiesPath,
         });
 
         // The result should be the direct URL as a string

@@ -41,6 +41,19 @@ const getBinaryPath = () => {
     return 'yt-dlp';
 };
 
+// Robust cookie path resolution
+const getCookiesPath = () => {
+    // 1. Try local project root
+    const localCookies = path.join(process.cwd(), 'youtube_cookies.txt');
+    if (fs.existsSync(localCookies)) return localCookies;
+
+    // 2. Try parent dir (Vercel)
+    const lambdaCookies = path.join(process.cwd(), '..', 'youtube_cookies.txt');
+    if (fs.existsSync(lambdaCookies)) return lambdaCookies;
+
+    return undefined;
+};
+
 const binaryPath = getBinaryPath();
 const youtubedl = create(binaryPath);
 
@@ -151,12 +164,14 @@ export async function POST(request: NextRequest) {
 
         // Fetch video info using yt-dlp with strict timeout and optimizations
         // to prevent process accumulation and memory exhaustion
+        const cookiesPath = getCookiesPath();
         const info = await youtubedl(url, {
             dumpSingleJson: true,
             noCheckCertificates: true,
             noWarnings: true,
             preferFreeFormats: true,
             noPlaylist: true,        // Prevent processing entire playlists
+            cookies: cookiesPath,    // Pass cookies to bypass bot detection
         }) as YtDlpOutput;
 
         // Extract formats
