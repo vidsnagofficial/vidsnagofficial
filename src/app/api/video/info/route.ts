@@ -4,7 +4,23 @@ import { create } from "youtube-dl-exec";
 // Use system-installed yt-dlp instead of the bundled one (fixes path issues)
 // Use custom binary path
 import * as path from "path";
-const binaryPath = path.join(process.cwd(), 'bin', 'yt-dlp');
+import * as fs from "fs";
+
+// Robust path resolution for Vercel
+const getBinaryPath = () => {
+    // 1. Try local project bin (works in dev)
+    const localBin = path.join(process.cwd(), 'bin', 'yt-dlp');
+    if (fs.existsSync(localBin)) return localBin;
+
+    // 2. Try Vercel's lambda path (sometimes differs)
+    const lambdaBin = path.join(process.cwd(), '..', 'bin', 'yt-dlp');
+    if (fs.existsSync(lambdaBin)) return lambdaBin;
+
+    // 3. Fallback to just 'yt-dlp' if in PATH
+    return 'yt-dlp';
+};
+
+const binaryPath = getBinaryPath();
 const youtubedl = create(binaryPath);
 
 // Define the shape of yt-dlp output

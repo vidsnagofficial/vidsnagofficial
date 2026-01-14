@@ -265,9 +265,19 @@ async function startDownload(
             return;
         }
 
-        console.log(`[VidSnag] Spawning yt-dlp...`);
-        // Use custom binary path
-        const binaryPath = path.join(process.cwd(), 'bin', 'yt-dlp');
+        // Robust path resolution for Vercel
+        const getBinaryPath = () => {
+            const localBin = path.join(process.cwd(), 'bin', 'yt-dlp');
+            if (fs.existsSync(localBin)) return localBin;
+
+            const lambdaBin = path.join(process.cwd(), '..', 'bin', 'yt-dlp');
+            if (fs.existsSync(lambdaBin)) return lambdaBin;
+
+            return 'yt-dlp';
+        };
+
+        const binaryPath = getBinaryPath();
+        console.log(`[VidSnag] Spawning yt-dlp from: ${binaryPath}`);
         const ytdlp = spawn(binaryPath, args);
         console.log(`[VidSnag] yt-dlp spawned with PID: ${ytdlp.pid}`);
         let lastProgress = 0;
