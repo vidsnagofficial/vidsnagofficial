@@ -12,7 +12,6 @@ if (!fs.existsSync(binDir)) {
 }
 
 // URL for the latest yt-dlp binary (Linux version for Vercel)
-// Note: Vercel runs on Linux, so we need the linux binary
 const BINARY_URL = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp';
 
 console.log('Setup: Checking for yt-dlp binary...');
@@ -21,14 +20,29 @@ if (fs.existsSync(ytDlpPath)) {
     console.log('Setup: yt-dlp binary already exists.');
 } else {
     console.log('Setup: Downloading yt-dlp binary from GitHub...');
-    const file = fs.createWriteStream(ytDlpPath);
+    downloadFile(BINARY_URL, ytDlpPath);
+}
 
-    https.get(BINARY_URL, (response) => {
+function downloadFile(url, destPath) {
+    // If recursively called, we might need to recreate the stream if it was closed? 
+    // Actually, createWriteStream overwrites.
+
+    const request = https.get(url, (response) => {
+        // Handle Redirects
+        if (response.statusCode === 301 || response.statusCode === 302) {
+            console.log(`Setup: Redirecting to ${response.headers.location}...`);
+            // Recursively call with new URL
+            return downloadFile(response.headers.location, destPath);
+        }
+
         if (response.statusCode !== 200) {
             console.error(`Setup: Failed to download binary. Status code: ${response.statusCode}`);
+            // Clean up empty file
+            fs.unlink(destPath, () => { });
             process.exit(1);
         }
 
+        const file = fs.createWriteStream(destPath);
         response.pipe(file);
 
         file.on('finish', () => {
@@ -38,15 +52,17 @@ if (fs.existsSync(ytDlpPath)) {
             // Make executable
             try {
                 if (process.platform !== 'win32') {
-                    execSync(`chmod +x ${ytDlpPath}`);
+                    execSync(`chmod +x ${destPath}`);
                     console.log('Setup: Made binary executable.');
                 }
             } catch (error) {
                 console.error('Setup: Failed to make binary executable:', error);
             }
         });
-    }).on('error', (err) => {
-        fs.unlink(ytDlpPath, () => { }); // Delete failed file
+    });
+
+    request.on('error', (err) => {
+        fs.unlink(destPath, () => { }); // Delete failed file
         console.error('Setup: Download error:', err.message);
         process.exit(1);
     });
