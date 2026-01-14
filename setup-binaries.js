@@ -11,8 +11,9 @@ if (!fs.existsSync(binDir)) {
     fs.mkdirSync(binDir, { recursive: true });
 }
 
-// URL for the latest yt-dlp binary (Linux version for Vercel)
-const BINARY_URL = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp';
+// URL for the latest yt-dlp binary (Linux versionStandalone for Vercel)
+// We use 'yt-dlp_linux' which has Python embedded, as Vercel doesn't have Python installed
+const BINARY_URL = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux';
 
 console.log('Setup: Checking for yt-dlp binary...');
 
